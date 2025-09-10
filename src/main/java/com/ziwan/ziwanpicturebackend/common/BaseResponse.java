@@ -3,10 +3,8 @@ package com.ziwan.ziwanpicturebackend.common;
 import com.ziwan.ziwanpicturebackend.exception.ErrorCode;
 import lombok.Data;
 
-import java.io.Serializable;
-
 @Data
-public class BaseResponse<T> implements Serializable {
+public class BaseResponse<T> {
 
     private int code;
 
