@@ -52,4 +52,3 @@ cos:
     region: ${cos.client.region}
     bucket: ${cos.client.bucket}
 
-mooo
