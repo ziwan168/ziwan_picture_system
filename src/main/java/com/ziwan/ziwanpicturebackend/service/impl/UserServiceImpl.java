@@ -13,6 +13,7 @@ import com.ziwan.ziwanpicturebackend.exception.ThrowUtils;
 import com.ziwan.ziwanpicturebackend.model.dto.user.UserQueryRequest;
 import com.ziwan.ziwanpicturebackend.model.dto.user.UserRegisterRequest;
 import com.ziwan.ziwanpicturebackend.model.entity.User;
+import com.ziwan.ziwanpicturebackend.model.enums.UserRoleEnum;
 import com.ziwan.ziwanpicturebackend.model.vo.UserLoginVO;
 import com.ziwan.ziwanpicturebackend.model.vo.UserVO;
 import com.ziwan.ziwanpicturebackend.service.UserService;
@@ -222,6 +223,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         String userRole = userQueryRequest.getUserRole();
         String sortField = userQueryRequest.getSortField();
         String sortOrder = userQueryRequest.getSortOrder();
+
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(ObjUtil.isNotNull( id), "id", id);
         queryWrapper.like(StrUtil.isNotBlank(userName), "userName", userName);
@@ -230,6 +232,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         queryWrapper.eq(StrUtil.isNotBlank(userRole), "userRole", userRole);
         queryWrapper.orderBy(StrUtil.isNotBlank(sortField),sortOrder.equals("ascend"), sortField);
         return queryWrapper;
+    }
+
+    @Override
+    public boolean isAdmin(User user) {
+
+        return user != null && UserRoleEnum.ADMIN.getValue().equals(user.getUserRole());
     }
 }
 

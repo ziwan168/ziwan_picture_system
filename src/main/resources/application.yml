@@ -5,15 +5,20 @@ server:
 
 
 spring:
+  profiles:
+    active: local
   application:
     name:ziwan-picture-backend
+  servlet:
+    multipart:
+      max-file-size: 10MB
 
 
   datasource:
-    driver-class-name: ${server.datasource.driver-class-name}
-    url: ${server.datasource.url}
-    username: ${server.datasource.username}
-    password: ${server.datasource.password}
+    driver-class-name: ${datasource.driver-class-name}
+    url: ${datasource.url}
+    username: ${datasource.username}
+    password: ${datasource.password}
 
 mybatis-plus:
   configuration:
@@ -37,3 +42,14 @@ knife4j:
         api-rule: package
         api-rule-resources:
           - com.ziwan.ziwanpicturebackend.controller
+
+
+cos:
+  client:
+    host: ${cos.client.host}
+    secretId: ${cos.client.secretId}
+    secretKey: ${cos.client.secretKey}
+    region: ${cos.client.region}
+    bucket: ${cos.client.bucket}
+
+mooo
