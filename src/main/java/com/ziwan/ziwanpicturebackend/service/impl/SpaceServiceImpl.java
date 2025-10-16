@@ -216,7 +216,36 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         //空间等级
         if (space.getSpaceLevel() == null) {
             space.setSpaceLevel(SpaceLevelEnum.COMMON.getValue());
+            space.setMaxSize(SpaceLevelEnum.COMMON.getMaxSize());
+            space.setMaxCount(SpaceLevelEnum.COMMON.getMaxCount());
         }
+
+        if (space.getSpaceLevel() != null && space.getSpaceLevel() == SpaceLevelEnum.COMMON.getValue()){
+            space.setSpaceLevel(SpaceLevelEnum.COMMON.getValue());
+            space.setMaxSize(SpaceLevelEnum.COMMON.getMaxSize());
+            space.setMaxCount(SpaceLevelEnum.COMMON.getMaxCount());
+        }
+        if (space.getSpaceLevel() != null &&
+                space.getSpaceLevel() == SpaceLevelEnum.PROFESSIONAL.getValue() &&
+                userService.isAdmin(loginUser)
+        ){
+            space.setSpaceLevel(SpaceLevelEnum.PROFESSIONAL.getValue());
+            space.setMaxSize(SpaceLevelEnum.PROFESSIONAL.getMaxSize());
+            space.setMaxCount(SpaceLevelEnum.PROFESSIONAL.getMaxCount());
+        }else if (space.getSpaceLevel() != null && space.getSpaceLevel() == SpaceLevelEnum.PROFESSIONAL.getValue()){
+            throw new BusinessException(ErrorCode.NO_AUTO_ERROR);
+        }
+        if (space.getSpaceLevel() != null &&
+                space.getSpaceLevel() == SpaceLevelEnum.FLAGSHIP.getValue() &&
+                userService.isAdmin(loginUser)
+        ){
+            space.setSpaceLevel(SpaceLevelEnum.FLAGSHIP.getValue());
+            space.setMaxSize(SpaceLevelEnum.FLAGSHIP.getMaxSize());
+            space.setMaxCount(SpaceLevelEnum.FLAGSHIP.getMaxCount());
+        }else if (space.getSpaceLevel() != null && space.getSpaceLevel() == SpaceLevelEnum.FLAGSHIP.getValue()){
+            throw new BusinessException(ErrorCode.NO_AUTO_ERROR ,"无此空间权限");
+        }
+
         this.fillSpaceBySpaceLevel(space);
         this.validSpace(space, true);
 

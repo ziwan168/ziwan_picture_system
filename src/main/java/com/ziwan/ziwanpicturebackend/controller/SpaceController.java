@@ -42,10 +42,10 @@ public class SpaceController {
     public BaseResponse<Long> addSpace(@RequestBody SpaceAddRequest spaceAddRequest,
                                           HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
+        ThrowUtils.throwIf(ObjUtil.isEmpty(loginUser), ErrorCode.NOT_LOGIN_ERROR, "未登录");
         if (spaceAddRequest == null) {
             spaceAddRequest = new SpaceAddRequest();
         }
-        ThrowUtils.throwIf(ObjUtil.isEmpty(loginUser), ErrorCode.NOT_LOGIN_ERROR, "未登录");
         long resultId = spaceService.addSpace(spaceAddRequest, loginUser);
         return ResultUtils.success(resultId);
     }

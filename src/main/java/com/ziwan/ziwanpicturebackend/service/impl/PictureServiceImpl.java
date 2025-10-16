@@ -52,8 +52,8 @@ import java.util.stream.Collectors;
 
 /**
  * @author brave
- * @description 针对表【picture(图片)】的数据库操作Service实现
- * @createDate 2025-09-10 23:07:53
+ * &#064;description  针对表【picture(图片)】的数据库操作Service实现
+ * &#064;createDate  2025-09-10 23:07:53
  */
 @Service
 @Slf4j
@@ -84,7 +84,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     /**
      * 验证
      *
-     * @param picture
+     * @param picture 图片
      */
     @Override
     public void validPicture(Picture picture) {
@@ -105,10 +105,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     /**
      * 上传图片
      *
-     * @param inputSource
-     * @param pictureUploadRequest
-     * @param loginUser
-     * @return
+     * @param inputSource 输入源
+     * @param pictureUploadRequest 上传图片请求
+     * @param loginUser 登录用户
+     * @return 图片信息
      */
     @Override
     public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser) {
@@ -252,9 +252,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     /**
      * 获取图片
      *
-     * @param picture
-     * @param request
-     * @return
+     * @param picture  图片
+     * @param request  请求
+     * @return  脱敏后的图片
      */
     @Override
     public PictureVO getPictureVO(Picture picture, HttpServletRequest request) {
@@ -271,9 +271,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     /**
      * 获取图片分页
      *
-     * @param picturePage
-     * @param request
-     * @return
+     * @param picturePage 图片分页
+     * @param request     请求
+     * @return 图片分页
      */
     @Override
     public Page<PictureVO> getPictureVOPage(Page<Picture> picturePage, HttpServletRequest request) {
@@ -308,8 +308,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     /**
      * 获取查询条件
      *
-     * @param pictureQueryRequest
-     * @return
+     * @param pictureQueryRequest 图片查询条件
+     * @return 查询条件
      */
     @Override
     public QueryWrapper<Picture> getQueryWrapper(PictureQueryRequest pictureQueryRequest) {
@@ -382,8 +382,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     /**
      * 图片审核
      *
-     * @param pictureReviewRequest
-     * @param loginUser
+     * @param pictureReviewRequest 图片审核请求
+     * @param loginUser  登录用户
      */
     @Override
     public void doPictureReview(PictureReviewRequest pictureReviewRequest, User loginUser) {
@@ -416,8 +416,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     /**
      * 填充审核参数
      *
-     * @param picture
-     * @param loginUser
+     * @param picture  图片
+     * @param loginUser 登录用户
      */
     @Override
     public void fillReviewParams(Picture picture, User loginUser) {
@@ -433,6 +433,14 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     }
 
+
+    /**
+     * 图片上传
+     *
+     * @param pictureUploadByBatchRequest 图片上传请求
+     * @param loginUser  登录用户
+     * @return 图片信息
+     */
     @Override
     public Integer uploadPictureByBatch(PictureUploadByBatchRequest pictureUploadByBatchRequest, User loginUser) {
         String searchText = pictureUploadByBatchRequest.getSearchText();
@@ -568,8 +576,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             //更新额度
             boolean update = spaceService.lambdaUpdate()
                     .eq(Space::getId, oldPicture.getSpaceId())
-                    .setSql("totalSize = totalSize +" + oldPicture.getPicSize())
-                    .setSql("totalCount = totalCount +1")
+                    .setSql("totalSize = totalSize -" + oldPicture.getPicSize())
+                    .setSql("totalCount = totalCount -1")
                     .update();
             ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "更新额度失败");
             return true;
