@@ -60,7 +60,6 @@ public interface UserService extends IService<User> {
     /**
      * 获取脱敏的已登录用户信息
      *
-     * @return
      */
     UserVO getUserVO(User user);
 
@@ -68,22 +67,34 @@ public interface UserService extends IService<User> {
     /**
      * 获取脱敏的用户列表
      *
-     * @param userList
-     * @return
+     * @param userList 用户列表
+     *
      */
     List<UserVO> getUserVOList(List<User> userList);
 
     /**
      * 用户注销
      *
-     * @param request
-     * @return
+     * @param request 请求
+     *
      */
     boolean userLogout(HttpServletRequest request);
 
 
+    /**
+     * 获取查询条件
+     *
+     * @param userQueryRequest
+     *
+     */
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 
 
+    /**
+     * 是否为管理员
+     *
+     * @param user 用户
+     *
+     */
     boolean isAdmin(User user);
 }

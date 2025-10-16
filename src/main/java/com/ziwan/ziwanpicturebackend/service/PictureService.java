@@ -2,15 +2,11 @@ package com.ziwan.ziwanpicturebackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.ziwan.ziwanpicturebackend.model.dto.picture.PictureQueryRequest;
-import com.ziwan.ziwanpicturebackend.model.dto.picture.PictureReviewRequest;
-import com.ziwan.ziwanpicturebackend.model.dto.picture.PictureUploadByBatchRequest;
-import com.ziwan.ziwanpicturebackend.model.dto.picture.PictureUploadRequest;
+import com.ziwan.ziwanpicturebackend.model.dto.picture.*;
 import com.ziwan.ziwanpicturebackend.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.ziwan.ziwanpicturebackend.model.entity.User;
 import com.ziwan.ziwanpicturebackend.model.vo.PictureVO;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -95,4 +91,38 @@ public interface PictureService extends IService<Picture> {
      */
     Integer uploadPictureByBatch(PictureUploadByBatchRequest pictureUploadByBatchRequest,
                                  User loginUser);
+
+
+    /**
+     * 删除图片
+     *
+     * @param oldPicture 旧图片
+     */
+    void clearPicture(Picture oldPicture);
+
+    /**
+     * 检查空间图片权限
+     *
+     * @param loginUser
+     * @param picture
+     */
+    void checkPictureAuth(User loginUser,Picture picture);
+
+    /**
+     * 删除图片
+     *
+     * @param id
+     * @param loginUser
+     */
+    void deletePicture(Long id, User loginUser);
+
+    /**
+     * 编辑图片
+     *
+     * @param pictureEditRequest
+     * @param loginUser
+     */
+    void editPicture(PictureEditRequest pictureEditRequest, User loginUser);
+
+    Page<PictureVO> listPictureVOByPageWithCache(PictureQueryRequest pictureQueryRequest, HttpServletRequest request);
 }

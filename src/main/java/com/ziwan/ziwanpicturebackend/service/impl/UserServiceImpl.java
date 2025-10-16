@@ -10,12 +10,14 @@ import com.ziwan.ziwanpicturebackend.constant.UserConstant;
 import com.ziwan.ziwanpicturebackend.exception.BusinessException;
 import com.ziwan.ziwanpicturebackend.exception.ErrorCode;
 import com.ziwan.ziwanpicturebackend.exception.ThrowUtils;
+import com.ziwan.ziwanpicturebackend.model.dto.space.SpaceAddRequest;
 import com.ziwan.ziwanpicturebackend.model.dto.user.UserQueryRequest;
 import com.ziwan.ziwanpicturebackend.model.dto.user.UserRegisterRequest;
 import com.ziwan.ziwanpicturebackend.model.entity.User;
 import com.ziwan.ziwanpicturebackend.model.enums.UserRoleEnum;
 import com.ziwan.ziwanpicturebackend.model.vo.UserLoginVO;
 import com.ziwan.ziwanpicturebackend.model.vo.UserVO;
+import com.ziwan.ziwanpicturebackend.service.SpaceService;
 import com.ziwan.ziwanpicturebackend.service.UserService;
 import com.ziwan.ziwanpicturebackend.mapper.UserMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +36,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         implements UserService {
+
+    @Resource
+    private SpaceService spaceService;
 
 
     /**
@@ -79,9 +85,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (!save) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "注册失败");
         }
+        try {
+            SpaceAddRequest defaultRequest = new SpaceAddRequest();
+            spaceService.addSpace(defaultRequest, user);
+        } catch (Exception e) {
+            log.error("用户 {} 空间创建失败: {}", user.getUserAccount(), e.getMessage(), e);
+        }
+
+
         return user.getId();
-
-
     }
 
     /**

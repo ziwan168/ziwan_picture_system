@@ -100,7 +100,6 @@ public class UserController {
         boolean result = userService.save(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(user.getId());
-
     }
 
     /**
@@ -158,6 +157,12 @@ public class UserController {
         return ResultUtils.success(true);
     }
 
+    /**
+     * 获取用户列表
+     *
+     * @param userQueryRequest
+     * @return
+     */
     @PostMapping("/list/page/vo")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<UserVO>> listUserVOByPage(@RequestBody UserQueryRequest userQueryRequest) {

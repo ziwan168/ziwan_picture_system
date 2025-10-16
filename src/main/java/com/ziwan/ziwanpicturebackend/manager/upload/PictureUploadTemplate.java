@@ -1,11 +1,14 @@
 package com.ziwan.ziwanpicturebackend.manager.upload;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.qcloud.cos.model.PutObjectResult;
+import com.qcloud.cos.model.ciModel.persistence.CIObject;
 import com.qcloud.cos.model.ciModel.persistence.ImageInfo;
+import com.qcloud.cos.model.ciModel.persistence.ProcessResults;
 import com.ziwan.ziwanpicturebackend.config.CosClientConfig;
 import com.ziwan.ziwanpicturebackend.exception.BusinessException;
 import com.ziwan.ziwanpicturebackend.exception.ErrorCode;
@@ -17,6 +20,7 @@ import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 
 /**
@@ -56,11 +60,21 @@ public abstract class PictureUploadTemplate {
         try {
             file = File.createTempFile(uploadPath, null);
 
+            //处理文件
             processFile(inputSource, file);
+            //上传图片
             PutObjectResult putObjectResult = cosManager.putPictureObject(uploadPath, file);
+            //解析结果
             ImageInfo imageInfo = putObjectResult.getCiUploadResult().getOriginalInfo().getImageInfo();
 
+            ProcessResults processResults = putObjectResult.getCiUploadResult().getProcessResults();
+            List<CIObject> objectList = processResults.getObjectList();
+            if (CollUtil.isNotEmpty(objectList)) {
+                CIObject compressedCiObject = objectList.get(0);
+                CIObject thumbnailCiObject = objectList.get(1);
 
+                return buildResult(originalFilename, compressedCiObject, thumbnailCiObject);
+            }
             return buildResult(imageInfo, uploadPath, originalFilename, file);
 
 
@@ -73,6 +87,32 @@ public abstract class PictureUploadTemplate {
         }
 
 
+    }
+
+    /**
+     * 构建结果
+     *
+     * @param originalFilename 原始文件名
+     * @param compressedCiObject 压缩文件
+     * @param thumbnailCiObject 缩略图
+     * @return
+     */
+    private UploadPictureResult buildResult(String originalFilename, CIObject compressedCiObject, CIObject thumbnailCiObject) {
+        int width = compressedCiObject.getWidth();
+        int height = compressedCiObject.getHeight();
+
+        double picScale = NumberUtil.round((double) width / height, 2).doubleValue();
+
+        return UploadPictureResult.builder()
+                .url(cosClientConfig.getHost() + "/" + compressedCiObject.getKey())
+                .thumbnailUrl(cosClientConfig.getHost() + "/" + thumbnailCiObject.getKey())
+                .picName(FileUtil.mainName(originalFilename))
+                .picSize(compressedCiObject.getSize().longValue())
+                .picWidth(width)
+                .picHeight(height)
+                .picScale(picScale)
+                .picFormat(compressedCiObject.getFormat())
+                .build();
     }
 
     /**

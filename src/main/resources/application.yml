@@ -2,6 +2,12 @@ server:
   port: 8081
   servlet:
     context-path: /api
+    #    cookie 30天过期
+    session:
+      cookie:
+        max-age: 2592000
+
+
 
 
 spring:
@@ -13,12 +19,26 @@ spring:
     multipart:
       max-file-size: 10MB
 
-
+  #  数据库配置
   datasource:
     driver-class-name: ${datasource.driver-class-name}
     url: ${datasource.url}
     username: ${datasource.username}
     password: ${datasource.password}
+
+  #  Redis配置
+  redis:
+    host: ${redis.host}
+    port: ${redis.port}
+    password: ${redis.password}
+    database: 0
+    timeout: 5000
+  #  session
+  session:
+    store-type: redis
+    # session 30天后过期
+    timeout: 2592000
+
 
 mybatis-plus:
   configuration:
@@ -52,3 +72,7 @@ cos:
     region: ${cos.client.region}
     bucket: ${cos.client.bucket}
 
+logging:
+  level:
+    root: INFO
+    com.ziwan.ziwanpicturebackend: INFO
