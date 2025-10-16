@@ -43,8 +43,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     @Resource
     private UserService userService;
-    @Resource
-    private SpaceService spaceService;
+
 
     @Resource
     private TransactionTemplate transactionTemplate;
@@ -219,7 +218,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
             space.setSpaceLevel(SpaceLevelEnum.COMMON.getValue());
         }
         this.fillSpaceBySpaceLevel(space);
-        spaceService.validSpace(space, true);
+        this.validSpace(space, true);
 
         Long loginUserId = loginUser.getId();
         space.setUserId(loginUserId);
