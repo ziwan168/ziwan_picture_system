@@ -337,6 +337,12 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Integer reviewStatus = pictureQueryRequest.getReviewStatus();
         String reviewMessage = pictureQueryRequest.getReviewMessage();
         Long reviewerId = pictureQueryRequest.getReviewerId();
+        Date startEditTime = pictureQueryRequest.getStartEditTime();
+        Date endEditTime = pictureQueryRequest.getEndEditTime();
+
+
+
+
 
 
         if (StrUtil.isNotBlank(searchText)) {
@@ -363,6 +369,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         queryWrapper.eq(ObjUtil.isNotEmpty(picScale), "picScale", picScale);
         queryWrapper.eq(ObjUtil.isNotEmpty(reviewerId), "reviewerId", reviewerId);
         queryWrapper.eq(ObjUtil.isNotEmpty(reviewStatus), "reviewStatus", reviewStatus);
+        queryWrapper.ge(ObjUtil.isNotEmpty(startEditTime), "editTime", startEditTime);
+        queryWrapper.lt(ObjUtil.isNotEmpty(endEditTime), "editTime", endEditTime);
+
+
 
 
         if (CollUtil.isNotEmpty(tags)) {
@@ -568,20 +578,31 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         this.checkPictureAuth(loginUser, oldPicture);
         //开启事务
         transactionTemplate.execute(status -> {
-            //插入数据库
-            boolean remove = this.removeById(id);
-            ThrowUtils.throwIf(!remove, ErrorCode.OPERATION_ERROR);
-            //更新额度
-            boolean update = spaceService.lambdaUpdate()
-                    .eq(Space::getId, oldPicture.getSpaceId())
-                    .setSql("totalSize = totalSize -" + oldPicture.getPicSize())
-                    .setSql("totalCount = totalCount -1")
-                    .update();
-            ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "更新额度失败");
-            return true;
+
+            if (userService.isAdmin(loginUser) && oldPicture.getSpaceId() ==null){
+                //插入数据库
+                boolean remove = this.removeById(id);
+                ThrowUtils.throwIf(!remove, ErrorCode.OPERATION_ERROR);
+                //删除图片资源
+                this.clearPicture(oldPicture);
+            }
+            if (oldPicture.getSpaceId() !=null ){
+                //删除数据
+                boolean remove = this.removeById(id);
+                ThrowUtils.throwIf(!remove, ErrorCode.OPERATION_ERROR);
+                //更新额度
+                boolean update = spaceService.lambdaUpdate()
+                        .eq(Space::getId, oldPicture.getSpaceId())
+                        .setSql("totalSize = totalSize -" + oldPicture.getPicSize())
+                        .setSql("totalCount = totalCount -1")
+                        .update();
+                ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "更新额度失败");
+                //删除图片资源
+                this.clearPicture(oldPicture);
+                return true;
+            }
+           return true;
         });
-        //删除图片资源
-        this.clearPicture(oldPicture);
     }
 
     /**
