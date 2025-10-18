@@ -2,10 +2,11 @@ package com.ziwan.ziwanpicturebackend.controller;
 
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ziwan.ziwanpicturebackend.annnotation.AuthCheck;
+import com.ziwan.ziwanpicturebackend.api.imagesearch.ImageSearchApiFacade;
+import com.ziwan.ziwanpicturebackend.api.imagesearch.model.ImageSearchResult;
 import com.ziwan.ziwanpicturebackend.common.BaseResponse;
 import com.ziwan.ziwanpicturebackend.common.DeleteRequest;
 import com.ziwan.ziwanpicturebackend.common.ResultUtils;
@@ -13,7 +14,6 @@ import com.ziwan.ziwanpicturebackend.constant.UserConstant;
 import com.ziwan.ziwanpicturebackend.exception.BusinessException;
 import com.ziwan.ziwanpicturebackend.exception.ErrorCode;
 import com.ziwan.ziwanpicturebackend.exception.ThrowUtils;
-import com.ziwan.ziwanpicturebackend.manager.LocalRedisCacheManager;
 import com.ziwan.ziwanpicturebackend.model.dto.picture.*;
 import com.ziwan.ziwanpicturebackend.model.dto.space.SpaceLevel;
 import com.ziwan.ziwanpicturebackend.model.entity.Picture;
@@ -27,15 +27,13 @@ import com.ziwan.ziwanpicturebackend.service.PictureService;
 import com.ziwan.ziwanpicturebackend.service.SpaceService;
 import com.ziwan.ziwanpicturebackend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/picture")
@@ -311,17 +309,67 @@ public class PictureController {
     public BaseResponse<List<SpaceLevel>> listSpaceLevel() {
         List<SpaceLevel> spaceLevels = Arrays.stream(SpaceLevelEnum.values())
                 .map(spaceLevelEnum ->
-                new SpaceLevel(
-                        spaceLevelEnum.getValue(),
-                        spaceLevelEnum.getText(),
-                        spaceLevelEnum.getMaxSize(),
-                        spaceLevelEnum.getMaxCount()
-                )).toList();
+                        new SpaceLevel(
+                                spaceLevelEnum.getValue(),
+                                spaceLevelEnum.getText(),
+                                spaceLevelEnum.getMaxSize(),
+                                spaceLevelEnum.getMaxCount()
+                        )).toList();
 
         return ResultUtils.success(spaceLevels);
 
     }
 
+    //以图搜图
+    @PostMapping("/search/picture")
+    public BaseResponse<List<ImageSearchResult>> searchPictureByPicture(@RequestBody SearchPictureByPictureRequest searchPictureByPictureRequest,
+                                                                        HttpServletRequest request) {
+
+        ThrowUtils.throwIf(searchPictureByPictureRequest == null, ErrorCode.PARAM_ERROR);
+        Long pictureId = searchPictureByPictureRequest.getPictureId();
+        ThrowUtils.throwIf(pictureId == null || pictureId <= 0, ErrorCode.PARAM_ERROR);
+        Picture oldPicture = pictureService.getById(pictureId);
+        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        List<ImageSearchResult> imageSearchResults;
+        if (oldPicture.getThumbnailUrl() != null) {
+            imageSearchResults = ImageSearchApiFacade.searchImage(oldPicture.getThumbnailUrl());
+        } else {
+            imageSearchResults = ImageSearchApiFacade.searchImage(oldPicture.getUrl());
+        }
+
+        return ResultUtils.success(imageSearchResults);
+
+
+    }
+
+    @PostMapping("/search/color")
+    public BaseResponse<List<PictureVO>> searchPictureByColor(@RequestBody SearchPictureByColorRequest searchPictureByColorRequest,
+                                                              HttpServletRequest request) {
+        ThrowUtils.throwIf(searchPictureByColorRequest == null, ErrorCode.PARAM_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        String picColor = searchPictureByColorRequest.getPicColor();
+        Long spaceId = searchPictureByColorRequest.getSpaceId();
+
+        List<PictureVO> pictureListVO = pictureService.searchPictureByColor(spaceId, picColor, loginUser);
+        return ResultUtils.success(pictureListVO);
+
+    }
+
+    /**
+     * 批量修改图片元数据
+     *
+     * @param pictureEditByBatchRequest 批量修改图片元数据请求
+     * @param request                   请求
+     * @return 响应
+     */
+    @PostMapping("/batch/edit")
+    public BaseResponse<Boolean> batchEditPictureMetadata(@RequestBody PictureEditByBatchRequest pictureEditByBatchRequest,
+                                                         HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureEditByBatchRequest == null, ErrorCode.PARAM_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        pictureService.batchEditPictureMetadata(pictureEditByBatchRequest, loginUser);
+        return ResultUtils.success(true);
+    }
 
 
 }

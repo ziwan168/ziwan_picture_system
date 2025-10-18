@@ -9,6 +9,7 @@ import com.ziwan.ziwanpicturebackend.model.entity.User;
 import com.ziwan.ziwanpicturebackend.model.vo.PictureVO;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 
 /**
@@ -125,4 +126,25 @@ public interface PictureService extends IService<Picture> {
     void editPicture(PictureEditRequest pictureEditRequest, User loginUser);
 
     Page<PictureVO> listPictureVOByPageWithCache(PictureQueryRequest pictureQueryRequest, HttpServletRequest request);
+
+    /**
+     * 按照颜色相似度查询图片
+     *
+     * @param spaceId   spaceId
+     * @param picColor  颜色
+     * @param loginUser 登录的用户
+     * @return 图片 vo 结合
+     */
+    List<PictureVO> searchPictureByColor(Long spaceId, String picColor, User loginUser);
+
+
+    /**
+     * 批量更新
+     *
+     * @param pictureEditByBatchRequest pictureEditByBatchRequest
+     * @param loginUser                 登录的用户
+     */
+    void batchEditPictureMetadata(PictureEditByBatchRequest pictureEditByBatchRequest, User loginUser);
+
+
 }

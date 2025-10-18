@@ -72,8 +72,7 @@ public abstract class PictureUploadTemplate {
             if (CollUtil.isNotEmpty(objectList)) {
                 CIObject compressedCiObject = objectList.get(0);
                 CIObject thumbnailCiObject = objectList.get(1);
-
-                return buildResult(originalFilename, compressedCiObject, thumbnailCiObject);
+                return buildResult(originalFilename, compressedCiObject, thumbnailCiObject, imageInfo);
             }
             return buildResult(imageInfo, uploadPath, originalFilename, file);
 
@@ -97,7 +96,7 @@ public abstract class PictureUploadTemplate {
      * @param thumbnailCiObject 缩略图
      * @return
      */
-    private UploadPictureResult buildResult(String originalFilename, CIObject compressedCiObject, CIObject thumbnailCiObject) {
+    private UploadPictureResult buildResult(String originalFilename, CIObject compressedCiObject, CIObject thumbnailCiObject, ImageInfo imageInfo) {
         int width = compressedCiObject.getWidth();
         int height = compressedCiObject.getHeight();
 
@@ -112,6 +111,7 @@ public abstract class PictureUploadTemplate {
                 .picHeight(height)
                 .picScale(picScale)
                 .picFormat(compressedCiObject.getFormat())
+                .picColor(imageInfo.getAve())
                 .build();
     }
 
@@ -127,6 +127,7 @@ public abstract class PictureUploadTemplate {
     private UploadPictureResult buildResult(ImageInfo imageInfo, String uploadPath, String originalFilename, File file) {
         int width = imageInfo.getWidth();
         int height = imageInfo.getHeight();
+        String picColor = imageInfo.getAve();
 
         double picScale = NumberUtil.round((double) width / height, 2).doubleValue();
 
@@ -138,6 +139,7 @@ public abstract class PictureUploadTemplate {
                 .picHeight(height)
                 .picScale(picScale)
                 .picFormat(imageInfo.getFormat())
+                .picColor(picColor)
                 .build();
     }
 

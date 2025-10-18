@@ -97,6 +97,12 @@ public class PictureVO implements Serializable {
 
 
     /**
+     * 图片主色调
+     */
+    private String picColor;
+
+
+    /**
      * vo 转 obj
      *
      * @param pictureVO

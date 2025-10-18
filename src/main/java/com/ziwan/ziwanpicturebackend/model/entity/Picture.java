@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.util.Date;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 图片
@@ -15,6 +17,8 @@ import lombok.Data;
  */
 @TableName(value = "picture")
 @Data
+@NoArgsConstructor // ✅ Lombok注解，生成无参构造
+@AllArgsConstructor
 @Builder
 public class Picture implements Serializable {
     @TableField(exist = false)
@@ -129,5 +133,10 @@ public class Picture implements Serializable {
      * 空间 id（为空表示公共空间）
      */
     private Long spaceId;
+
+    /**
+     * 图片主色调
+     */
+    private String picColor;
 
 }
