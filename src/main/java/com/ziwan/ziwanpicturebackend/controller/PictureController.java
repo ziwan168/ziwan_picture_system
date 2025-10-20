@@ -2,9 +2,13 @@ package com.ziwan.ziwanpicturebackend.controller;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ziwan.ziwanpicturebackend.annnotation.AuthCheck;
+import com.ziwan.ziwanpicturebackend.api.aliyunai.ALiYunAiApi;
+import com.ziwan.ziwanpicturebackend.api.aliyunai.model.CreateOutPaintingTaskResponse;
+import com.ziwan.ziwanpicturebackend.api.aliyunai.model.GetOutPaintingTaskResponse;
 import com.ziwan.ziwanpicturebackend.api.imagesearch.ImageSearchApiFacade;
 import com.ziwan.ziwanpicturebackend.api.imagesearch.model.ImageSearchResult;
 import com.ziwan.ziwanpicturebackend.common.BaseResponse;
@@ -29,6 +33,7 @@ import com.ziwan.ziwanpicturebackend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
@@ -48,6 +53,8 @@ public class PictureController {
 
     @Resource
     private SpaceService spaceService;
+    @Resource
+    private ALiYunAiApi aLiYunAiApi;
 
 
     /**
@@ -364,11 +371,36 @@ public class PictureController {
      */
     @PostMapping("/batch/edit")
     public BaseResponse<Boolean> batchEditPictureMetadata(@RequestBody PictureEditByBatchRequest pictureEditByBatchRequest,
-                                                         HttpServletRequest request) {
+                                                          HttpServletRequest request) {
         ThrowUtils.throwIf(pictureEditByBatchRequest == null, ErrorCode.PARAM_ERROR);
         User loginUser = userService.getLoginUser(request);
         pictureService.batchEditPictureMetadata(pictureEditByBatchRequest, loginUser);
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 创建 AI 扩图任务
+     */
+    @PostMapping("/out_painting/create_task")
+    public BaseResponse<CreateOutPaintingTaskResponse> createPictureOutPaintingTask(
+            @RequestBody CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest,
+            HttpServletRequest request) {
+        if (createPictureOutPaintingTaskRequest == null || createPictureOutPaintingTaskRequest.getPictureId() == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        CreateOutPaintingTaskResponse response = pictureService.createPictureOutPaintingTask(createPictureOutPaintingTaskRequest, loginUser);
+        return ResultUtils.success(response);
+    }
+
+    /**
+     * 查询 AI 扩图任务
+     */
+    @GetMapping("/out_painting/get_task")
+    public BaseResponse<GetOutPaintingTaskResponse> getPictureOutPaintingTask(String taskId) {
+        ThrowUtils.throwIf(StrUtil.isBlank(taskId), ErrorCode.PARAM_ERROR);
+        GetOutPaintingTaskResponse task = aLiYunAiApi.getOutPaintingTask(taskId);
+        return ResultUtils.success(task);
     }
 
 

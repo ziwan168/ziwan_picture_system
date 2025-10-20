@@ -9,6 +9,9 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.ziwan.ziwanpicturebackend.api.aliyunai.ALiYunAiApi;
+import com.ziwan.ziwanpicturebackend.api.aliyunai.model.CreateOutPaintingTaskRequest;
+import com.ziwan.ziwanpicturebackend.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.ziwan.ziwanpicturebackend.exception.BusinessException;
 import com.ziwan.ziwanpicturebackend.exception.ErrorCode;
 import com.ziwan.ziwanpicturebackend.exception.ThrowUtils;
@@ -36,6 +39,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -80,6 +84,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     @Resource
     private TransactionTemplate transactionTemplate;
 
+    @Resource
+    private ALiYunAiApi aLiYunAiApi;
+
     /**
      * 验证
      *
@@ -104,7 +111,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     /**
      * 上传图片
      *
-     * @param inputSource 输入源
+     * @param inputSource          输入源
      * @param pictureUploadRequest 上传图片请求
      * @param loginUser            登录用户
      * @return 图片信息
@@ -383,7 +390,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
      * 图片审核
      *
      * @param pictureReviewRequest 图片审核请求
-     * @param loginUser  登录用户
+     * @param loginUser            登录用户
      */
     @Override
     public void doPictureReview(PictureReviewRequest pictureReviewRequest, User loginUser) {
@@ -416,7 +423,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     /**
      * 填充审核参数
      *
-     * @param picture  图片
+     * @param picture   图片
      * @param loginUser 登录用户
      */
     @Override
@@ -438,7 +445,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
      * 图片上传
      *
      * @param pictureUploadByBatchRequest 图片上传请求
-     * @param loginUser  登录用户
+     * @param loginUser                   登录用户
      * @return 图片信息
      */
     @Override
@@ -744,6 +751,26 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 6. 操作数据库进行批量更新
         boolean result = this.updateBatchById(pictureList);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "批量编辑失败");
+    }
+
+    @Override
+    public CreateOutPaintingTaskResponse createPictureOutPaintingTask(CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest, User loginUser) {
+        Long pictureId = createPictureOutPaintingTaskRequest.getPictureId();
+        Picture picture = this.getById(pictureId);
+        Optional.ofNullable(picture)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_ERROR, "图片不存在"));
+
+        // 1. 校验权限
+        checkPictureAuth(loginUser, picture);
+        CreateOutPaintingTaskRequest createOutPaintingTaskRequest = new CreateOutPaintingTaskRequest();
+        CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();
+        input.setImageUrl(picture.getUrl());
+        createOutPaintingTaskRequest.setInput(input);
+        createOutPaintingTaskRequest.setParameters(createPictureOutPaintingTaskRequest.getParameters());
+
+
+        return aLiYunAiApi.createOutPaintingTask(createOutPaintingTaskRequest);
+
     }
 
     /**

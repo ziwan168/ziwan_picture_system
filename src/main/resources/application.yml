@@ -76,3 +76,9 @@ logging:
   level:
     root: INFO
     com.ziwan.ziwanpicturebackend: INFO
+
+
+
+#阿里云图像扩展api
+aliYun:
+    apiKey: ${aliYun.apiKey}

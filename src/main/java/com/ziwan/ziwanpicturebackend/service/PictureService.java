@@ -2,6 +2,7 @@ package com.ziwan.ziwanpicturebackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ziwan.ziwanpicturebackend.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.ziwan.ziwanpicturebackend.model.dto.picture.*;
 import com.ziwan.ziwanpicturebackend.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -146,5 +147,7 @@ public interface PictureService extends IService<Picture> {
      */
     void batchEditPictureMetadata(PictureEditByBatchRequest pictureEditByBatchRequest, User loginUser);
 
+
+    CreateOutPaintingTaskResponse createPictureOutPaintingTask(CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest, User loginUser);
 
 }
