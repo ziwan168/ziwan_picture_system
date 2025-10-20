@@ -29,8 +29,6 @@ import com.ziwan.ziwanpicturebackend.service.PictureService;
 import com.ziwan.ziwanpicturebackend.mapper.PictureMapper;
 import com.ziwan.ziwanpicturebackend.service.SpaceService;
 import com.ziwan.ziwanpicturebackend.service.UserService;
-import com.ziwan.ziwanpicturebackend.utils.ColorSimilarUtils;
-import com.ziwan.ziwanpicturebackend.utils.ColorTransformUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -43,10 +41,11 @@ import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.awt.*;
 import java.io.IOException;
-import java.util.*;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -104,7 +103,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     /**
      * 上传图片
      *
-     * @param inputSource          输入源
+     * @param inputSource 输入源
      * @param pictureUploadRequest 上传图片请求
      * @param loginUser            登录用户
      * @return 图片信息
@@ -339,8 +338,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Integer reviewStatus = pictureQueryRequest.getReviewStatus();
         String reviewMessage = pictureQueryRequest.getReviewMessage();
         Long reviewerId = pictureQueryRequest.getReviewerId();
-        Date startEditTime = pictureQueryRequest.getStartEditTime();
-        Date endEditTime = pictureQueryRequest.getEndEditTime();
 
 
         if (StrUtil.isNotBlank(searchText)) {
@@ -367,8 +364,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         queryWrapper.eq(ObjUtil.isNotEmpty(picScale), "picScale", picScale);
         queryWrapper.eq(ObjUtil.isNotEmpty(reviewerId), "reviewerId", reviewerId);
         queryWrapper.eq(ObjUtil.isNotEmpty(reviewStatus), "reviewStatus", reviewStatus);
-        queryWrapper.ge(ObjUtil.isNotEmpty(startEditTime), "editTime", startEditTime);
-        queryWrapper.lt(ObjUtil.isNotEmpty(endEditTime), "editTime", endEditTime);
 
 
         if (CollUtil.isNotEmpty(tags)) {
@@ -387,7 +382,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
      * 图片审核
      *
      * @param pictureReviewRequest 图片审核请求
-     * @param loginUser            登录用户
+     * @param loginUser  登录用户
      */
     @Override
     public void doPictureReview(PictureReviewRequest pictureReviewRequest, User loginUser) {
@@ -420,7 +415,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     /**
      * 填充审核参数
      *
-     * @param picture   图片
+     * @param picture  图片
      * @param loginUser 登录用户
      */
     @Override
@@ -442,7 +437,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
      * 图片上传
      *
      * @param pictureUploadByBatchRequest 图片上传请求
-     * @param loginUser                   登录用户
+     * @param loginUser  登录用户
      * @return 图片信息
      */
     @Override
@@ -574,31 +569,20 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         this.checkPictureAuth(loginUser, oldPicture);
         //开启事务
         transactionTemplate.execute(status -> {
-
-            if (userService.isAdmin(loginUser) && oldPicture.getSpaceId() == null) {
-                //插入数据库
-                boolean remove = this.removeById(id);
-                ThrowUtils.throwIf(!remove, ErrorCode.OPERATION_ERROR);
-                //删除图片资源
-                this.clearPicture(oldPicture);
-            }
-            if (oldPicture.getSpaceId() != null) {
-                //删除数据
-                boolean remove = this.removeById(id);
-                ThrowUtils.throwIf(!remove, ErrorCode.OPERATION_ERROR);
-                //更新额度
-                boolean update = spaceService.lambdaUpdate()
-                        .eq(Space::getId, oldPicture.getSpaceId())
-                        .setSql("totalSize = totalSize -" + oldPicture.getPicSize())
-                        .setSql("totalCount = totalCount -1")
-                        .update();
-                ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "更新额度失败");
-                //删除图片资源
-                this.clearPicture(oldPicture);
-                return true;
-            }
+            //插入数据库
+            boolean remove = this.removeById(id);
+            ThrowUtils.throwIf(!remove, ErrorCode.OPERATION_ERROR);
+            //更新额度
+            boolean update = spaceService.lambdaUpdate()
+                    .eq(Space::getId, oldPicture.getSpaceId())
+                    .setSql("totalSize = totalSize -" + oldPicture.getPicSize())
+                    .setSql("totalCount = totalCount -1")
+                    .update();
+            ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "更新额度失败");
             return true;
         });
+        //删除图片资源
+        this.clearPicture(oldPicture);
     }
 
     /**
@@ -685,105 +669,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             return pictureVOPage;
         }
     }
-
-    @Override
-    public List<PictureVO> searchPictureByColor(Long spaceId, String picColor, User loginUser) {
-        ThrowUtils.throwIf(spaceId == null || StrUtil.isBlank(picColor), ErrorCode.PARAM_ERROR);
-        ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_AUTO_ERROR, "无此空间权限");
-
-        Space space = spaceService.getById(spaceId);
-        ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
-        ThrowUtils.throwIf(!space.getUserId().equals(loginUser.getId()), ErrorCode.NO_AUTO_ERROR, "无此空间权限");
-        List<Picture> pictureList = this.lambdaQuery()
-                .eq(Picture::getSpaceId, spaceId)
-                .isNotNull(Picture::getPicColor)
-                .list();
-
-        if (CollUtil.isEmpty(pictureList)) {
-            return new ArrayList<>();
-        }
-        Color targetColor = Color.decode(picColor);
-        List<Picture> sortedPictureList = pictureList.stream()
-                .sorted(Comparator.comparingDouble(picture -> {
-                    String hexColor = picture.getPicColor();
-                    if (StrUtil.isBlank(hexColor)) {
-                        return Double.MAX_VALUE;
-                    }
-                    Color pictureColor = Color.decode(hexColor);
-                    return -ColorSimilarUtils.calculateSimilarity(targetColor, pictureColor);
-                }))
-                .limit(10).toList();
-
-
-        return sortedPictureList.stream().map(PictureVO::objToVo).toList();
-    }
-
-
-    @Override
-    public void batchEditPictureMetadata(PictureEditByBatchRequest pictureEditByBatchRequest, User loginUser) {
-        // 1. 获取和校验参数
-        List<Long> pictureIdList = pictureEditByBatchRequest.getPictureIdList();
-        Long spaceId = pictureEditByBatchRequest.getSpaceId();
-        String category = pictureEditByBatchRequest.getCategory();
-        List<String> tags = pictureEditByBatchRequest.getTags();
-        ThrowUtils.throwIf(CollUtil.isEmpty(pictureIdList), ErrorCode.PARAM_ERROR);
-        ThrowUtils.throwIf(spaceId == null, ErrorCode.PARAM_ERROR);
-        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
-        // 2. 校验空间权限
-        Space space = spaceService.getById(spaceId);
-        ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
-        if (!space.getUserId().equals(loginUser.getId())) {
-            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "没有空间访问权限");
-        }
-        // 3. 查询指定图片（仅选择需要的字段）
-        List<Picture> pictureList = this.lambdaQuery()
-                .select(Picture::getId, Picture::getSpaceId)
-                .eq(Picture::getSpaceId, spaceId)
-                .in(Picture::getId, pictureIdList)
-                .list();
-        if (pictureList.isEmpty()) {
-            return;
-        }
-        // 4. 更新分类和标签
-        pictureList.forEach(picture -> {
-            if (StrUtil.isNotBlank(category)) {
-                picture.setCategory(category);
-            }
-            if (CollUtil.isNotEmpty(tags)) {
-                picture.setTags(JSONUtil.toJsonStr(tags));
-            }
-        });
-        // 5. 批量重命名
-        String nameRule = pictureEditByBatchRequest.getNameRule();
-        fillPictureWithNameRule(pictureList, nameRule);
-        // 6. 操作数据库进行批量更新
-        boolean result = this.updateBatchById(pictureList);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "批量编辑失败");
-    }
-
-    /**
-     * nameRule 格式：图片{序号}
-     *
-     * @param pictureList
-     * @param nameRule
-     */
-    private void fillPictureWithNameRule(List<Picture> pictureList, String nameRule) {
-        if (CollUtil.isEmpty(pictureList) || StrUtil.isBlank(nameRule)) {
-            return;
-        }
-        long count = 1;
-        try {
-            for (Picture picture : pictureList) {
-                String pictureName = nameRule.replaceAll("\\{序号}", String.valueOf(count++));
-                picture.setName(pictureName);
-            }
-        } catch (Exception e) {
-            log.error("名称解析错误", e);
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "名称解析错误");
-        }
-    }
-
-
 
 
 }
