@@ -20,6 +20,7 @@ import com.ziwan.ziwanpicturebackend.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,13 +98,26 @@ public class SpaceAnalyzeServiceImpl implements SpaceAnalyzeService {
         queryWrapper
                 .select("category", "sum(picSize) as totalSize", "count(*) as Count")
                 .groupBy("category");
-        return pictureService.getBaseMapper().selectMaps(queryWrapper).stream().map(result ->
-                SpaceCategoryAnalyzeResponse.builder()
-                        .category(result.get("category").toString())
-                        .totalSize(Long.parseLong(result.get("totalSize").toString()))
-                        .count(Long.parseLong(result.get("Count").toString()))
-                        .build()
-        ).collect(Collectors.toList());
+        return pictureService.getBaseMapper().selectMaps(queryWrapper)
+                .stream()
+                .map(result -> {
+                    String category = result.get("category") != null ? result.get("category").toString() : "未分类";
+
+                    Number totalSizeNum = (Number) result.get("totalSize");
+                    Number countNum = (Number) result.get("Count");
+
+                    long totalSize = totalSizeNum != null ? totalSizeNum.longValue() : 0L;
+                    long count = countNum != null ? countNum.longValue() : 0L;
+
+                    return SpaceCategoryAnalyzeResponse.builder()
+                            .category(category)
+                            .totalSize(totalSize)
+                            .count(count)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+
     }
 
     @Override
@@ -114,7 +128,7 @@ public class SpaceAnalyzeServiceImpl implements SpaceAnalyzeService {
         QueryWrapper<Picture> queryWrapper = new QueryWrapper<>();
         fillAnalyzeQueryWrapper(spaceTagAnalyzeRequest, queryWrapper);
         queryWrapper
-                .select("tag");
+                .select("tags");
         List<String> tagsJsonList = pictureService.getBaseMapper()
                 .selectObjs(queryWrapper)
                 .stream()
@@ -170,23 +184,29 @@ public class SpaceAnalyzeServiceImpl implements SpaceAnalyzeService {
         Long userId = spaceUserAnalyzeRequest.getUserId();
         queryWrapper.eq(ObjUtil.isNotNull(userId), "userId", userId);
         // 时间维度:每日，每周，每月
+        // 时间维度:每日，每周，每月
         String timeDimension = spaceUserAnalyzeRequest.getTimeDimension();
-        if (TimeDimensionEnum.DAY.getValue().equals(timeDimension)){
-            queryWrapper.select( "date_format(createTime, '%Y-%m-%d') as period","count(*) as count");
-        }
-        else if (TimeDimensionEnum.WEEK.getValue().equals(timeDimension)){
-            queryWrapper.select( "YEARWEEK(createTime) as period","count(*) as count");
-        }
-        else if (TimeDimensionEnum.MONTH.getValue().equals(timeDimension)){
-            queryWrapper.select( "date_format(createTime, '%Y-%m') as period","count(*) as count");
-        }else {
+        if (TimeDimensionEnum.DAY.getValue().equals(timeDimension)) {
+            queryWrapper.select("date_format(createTime, '%Y-%m-%d') as period", "count(*) as count")
+                    .groupBy("date_format(createTime, '%Y-%m-%d')");
+        } else if (TimeDimensionEnum.WEEK.getValue().equals(timeDimension)) {
+            queryWrapper.select("YEARWEEK(createTime) as period", "count(*) as count")
+                    .groupBy("YEARWEEK(createTime)");
+        } else if (TimeDimensionEnum.MONTH.getValue().equals(timeDimension)) {
+            queryWrapper.select("date_format(createTime, '%Y-%m') as period", "count(*) as count")
+                    .groupBy("date_format(createTime, '%Y-%m')");
+        } else {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "时间维度错误");
         }
+
         return pictureService.getBaseMapper().selectMaps(queryWrapper)
                 .stream()
                 .map(result ->
-                new SpaceUserAnalyzeResponse(result.get("period").toString(),(Long) result.get("count"))
-        ).collect(Collectors.toList());
+                        new SpaceUserAnalyzeResponse(
+                                String.valueOf(result.get("period")),              // 安全转换，无论是 String 还是 Long
+                                ((Number) result.get("count")).longValue()        // 用 Number 转换 Long
+                        )
+                ).collect(Collectors.toList());
 
 
     }
@@ -197,7 +217,7 @@ public class SpaceAnalyzeServiceImpl implements SpaceAnalyzeService {
         ThrowUtils.throwIf(!userService.isAdmin(loginUser), ErrorCode.NO_AUTO_ERROR);
         QueryWrapper<Space> queryWrapper = new QueryWrapper<>();
         queryWrapper
-                .select("id", "spaceName", "userId","totalSize")
+                .select("id", "spaceName", "userId", "totalSize")
                 .orderByDesc("totalSize")
                 .last("limit " + spaceRankAnalyzeRequest.getTopN());
 
