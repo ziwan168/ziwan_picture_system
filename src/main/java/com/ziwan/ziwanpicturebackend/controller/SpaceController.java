@@ -59,8 +59,7 @@ public class SpaceController {
         Long id = deleteRequest.getId();
         Space oldSpace = spaceService.getById(id);
         ThrowUtils.throwIf(oldSpace == null, ErrorCode.NOT_FOUND_ERROR);
-        ThrowUtils.throwIf(!oldSpace.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser),
-                ErrorCode.NO_AUTO_ERROR);
+        spaceService.checkSpaceAuth(loginUser, oldSpace);
         boolean remove = spaceService.removeById(id);
         ThrowUtils.throwIf(!remove, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
@@ -194,8 +193,7 @@ public class SpaceController {
         Long id = spaceEditRequest.getId();
         Space oldSpace = spaceService.getById(id);
         ThrowUtils.throwIf(oldSpace == null, ErrorCode.NOT_FOUND_ERROR);
-        ThrowUtils.throwIf(!oldSpace.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser),
-                ErrorCode.NO_AUTO_ERROR);
+        spaceService.checkSpaceAuth(loginUser, oldSpace);
         boolean result = spaceService.updateById(space);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);

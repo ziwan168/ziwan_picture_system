@@ -39,7 +39,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -673,8 +672,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             // 分页查询(查询数据库)
             Page<Picture> picturePage = this.page(new Page<>(current, size),
                     this.getQueryWrapper(pictureQueryRequest));
-            Page<PictureVO> pictureVOPage = this.getPictureVOPage(picturePage, request);
-            return pictureVOPage;
+            return this.getPictureVOPage(picturePage, request);
+
         }
     }
 
@@ -776,8 +775,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     /**
      * nameRule 格式：图片{序号}
      *
-     * @param pictureList
-     * @param nameRule
+     * @param pictureList 图片列表
+     * @param nameRule    名称规则
      */
     private void fillPictureWithNameRule(List<Picture> pictureList, String nameRule) {
         if (CollUtil.isEmpty(pictureList) || StrUtil.isBlank(nameRule)) {
