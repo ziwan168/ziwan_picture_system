@@ -186,11 +186,11 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         if (enumByValue != null) {
             Long maxSize = space.getMaxSize();
             if (maxSize == null) {
-                space.setMaxSize(maxSize);
+                space.setMaxSize(enumByValue.getMaxSize());
             }
             Long maxCount = space.getMaxCount();
             if (maxCount == null) {
-                space.setMaxCount(maxCount);
+                space.setMaxCount(enumByValue.getMaxCount());
             }
 
         }

@@ -3,6 +3,7 @@ package com.ziwan.ziwanpicturebackend.controller;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ziwan.ziwanpicturebackend.annnotation.AuthCheck;
 import com.ziwan.ziwanpicturebackend.common.BaseResponse;
@@ -40,7 +41,7 @@ public class SpaceController {
 
     @PostMapping("/add")
     public BaseResponse<Long> addSpace(@RequestBody SpaceAddRequest spaceAddRequest,
-                                          HttpServletRequest request) {
+                                       HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         ThrowUtils.throwIf(ObjUtil.isEmpty(loginUser), ErrorCode.NOT_LOGIN_ERROR, "未登录");
         if (spaceAddRequest == null) {
@@ -49,6 +50,7 @@ public class SpaceController {
         long resultId = spaceService.addSpace(spaceAddRequest, loginUser);
         return ResultUtils.success(resultId);
     }
+
     @PostMapping("/delete")
     public BaseResponse<Boolean> deleteSpace(@RequestBody DeleteRequest deleteRequest,
                                              HttpServletRequest request) {
@@ -83,12 +85,10 @@ public class SpaceController {
         }
         Space space = new Space();
         BeanUtil.copyProperties(spaceUpdateRequest, space);
-
         // 填充空间等级
         spaceService.fillSpaceBySpaceLevel(space);
-
         // 参数校验:更新空间等级
-        spaceService.validSpace(space,false);
+        spaceService.validSpace(space, false);
         Long id = spaceUpdateRequest.getId();
         Space oldSpace = spaceService.getById(id);
         ThrowUtils.throwIf(oldSpace == null, ErrorCode.NOT_FOUND_ERROR);
@@ -166,8 +166,6 @@ public class SpaceController {
     }
 
 
-
-
     /**
      * 编辑（用户）
      *
@@ -197,6 +195,17 @@ public class SpaceController {
         boolean result = spaceService.updateById(space);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+    @PostMapping("/get/user/spaceId")
+    public BaseResponse<Long> getUserSpaceId(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        QueryWrapper<Space> space = new QueryWrapper<>();
+        space.eq("userId", loginUser.getId());
+        Long spaceId = spaceService.getBaseMapper().selectOne(space).getId();
+        return ResultUtils.success(spaceId);
     }
 
 
