@@ -2,6 +2,7 @@ package com.ziwan.ziwanpicturebackend.model.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -16,6 +17,7 @@ import lombok.Data;
 @TableName(value = "space")
 @Data
 public class Space implements Serializable {
+    @Serial
     @TableField(exist = false)
     private static final long serialVersionUID = -1508494805801841102L;
     /**

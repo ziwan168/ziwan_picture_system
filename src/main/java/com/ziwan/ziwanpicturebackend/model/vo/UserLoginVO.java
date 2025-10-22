@@ -2,12 +2,14 @@ package com.ziwan.ziwanpicturebackend.model.vo;
 
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
 
 @Data
 public class UserLoginVO implements Serializable {
+    @Serial
     private static final long serialVersionUID = 2865711080045366637L;
 
     /**

@@ -2,6 +2,7 @@ package com.ziwan.ziwanpicturebackend.model.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -21,6 +22,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class Picture implements Serializable {
+    @Serial
     @TableField(exist = false)
     private static final long serialVersionUID = 1590166513422776043L;
     /**

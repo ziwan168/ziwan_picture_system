@@ -2,6 +2,7 @@ package com.ziwan.ziwanpicturebackend.model.dto.space;
 
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @Data
@@ -33,6 +34,7 @@ public class SpaceUpdateRequest implements Serializable {
      */
     private Long maxCount;
 
+    @Serial
     private static final long serialVersionUID = 1L;
 }
 

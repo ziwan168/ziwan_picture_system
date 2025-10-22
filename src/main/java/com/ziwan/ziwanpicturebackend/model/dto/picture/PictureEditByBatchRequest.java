@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
@@ -36,7 +37,8 @@ public class PictureEditByBatchRequest implements Serializable {
      * 命名规则
      */
     private String nameRule;
-  
+
+    @Serial
     private static final long serialVersionUID = 1L;  
 }
 

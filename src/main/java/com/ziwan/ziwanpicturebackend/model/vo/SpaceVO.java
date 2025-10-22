@@ -3,6 +3,8 @@ package com.ziwan.ziwanpicturebackend.model.vo;
 import cn.hutool.core.bean.BeanUtil;
 import com.ziwan.ziwanpicturebackend.model.entity.Space;
 import lombok.Data;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -68,6 +70,7 @@ public class SpaceVO implements Serializable {
      */
     private UserVO user;
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**

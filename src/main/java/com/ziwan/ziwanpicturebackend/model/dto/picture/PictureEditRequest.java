@@ -2,6 +2,7 @@ package com.ziwan.ziwanpicturebackend.model.dto.picture;
 
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
@@ -36,5 +37,6 @@ public class PictureEditRequest implements Serializable {
      */
     private List<String> tags;
 
+    @Serial
     private static final long serialVersionUID = 1L;
 }

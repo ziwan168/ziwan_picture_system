@@ -2,6 +2,7 @@ package com.ziwan.ziwanpicturebackend.model.dto.picture;
 
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 
@@ -24,6 +25,7 @@ public class PictureReviewRequest implements Serializable {
     private String reviewMessage;
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
 }
 

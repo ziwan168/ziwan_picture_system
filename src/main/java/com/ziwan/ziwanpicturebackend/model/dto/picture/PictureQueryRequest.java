@@ -4,6 +4,7 @@ import com.ziwan.ziwanpicturebackend.common.PageRequest;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -113,6 +114,7 @@ public class PictureQueryRequest extends PageRequest implements Serializable {
     private Date endEditTime;
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
 }
 

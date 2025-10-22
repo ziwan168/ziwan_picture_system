@@ -2,6 +2,7 @@ package com.ziwan.ziwanpicturebackend.model.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -15,6 +16,7 @@ import lombok.Data;
 @TableName(value = "user")
 @Data
 public class User implements Serializable {
+    @Serial
     @TableField(exist = false)
     private static final long serialVersionUID = 2083967867158353635L;
     /**

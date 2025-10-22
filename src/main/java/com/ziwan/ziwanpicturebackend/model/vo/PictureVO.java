@@ -6,6 +6,7 @@ import com.ziwan.ziwanpicturebackend.model.entity.Picture;
 import lombok.Builder;
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
 @Builder
 public class PictureVO implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 5856252017773483958L;
     private Long id;
 
