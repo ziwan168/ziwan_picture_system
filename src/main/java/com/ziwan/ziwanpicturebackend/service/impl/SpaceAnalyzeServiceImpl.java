@@ -181,6 +181,7 @@ public class SpaceAnalyzeServiceImpl implements SpaceAnalyzeService {
 
         Long userId = spaceUserAnalyzeRequest.getUserId();
         queryWrapper.eq(ObjUtil.isNotNull(userId), "userId", userId);
+
         // 时间维度:每日，每周，每月
         // 时间维度:每日，每周，每月
         String timeDimension = spaceUserAnalyzeRequest.getTimeDimension();

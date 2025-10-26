@@ -13,6 +13,7 @@ import com.ziwan.ziwanpicturebackend.constant.UserConstant;
 import com.ziwan.ziwanpicturebackend.exception.BusinessException;
 import com.ziwan.ziwanpicturebackend.exception.ErrorCode;
 import com.ziwan.ziwanpicturebackend.exception.ThrowUtils;
+import com.ziwan.ziwanpicturebackend.manager.auth.SpaceUserAuthManager;
 import com.ziwan.ziwanpicturebackend.model.dto.space.SpaceAddRequest;
 import com.ziwan.ziwanpicturebackend.model.dto.space.SpaceEditRequest;
 import com.ziwan.ziwanpicturebackend.model.dto.space.SpaceUpdateRequest;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
+import java.util.List;
 
 @RestController
 @RequestMapping("/space")
@@ -37,6 +39,10 @@ public class SpaceController {
     private SpaceService spaceService;
     @Resource
     private UserService userService;
+
+    @Resource
+    private SpaceUserAuthManager spaceUserAuthManager;
+
 
 
     @PostMapping("/add")
@@ -123,6 +129,9 @@ public class SpaceController {
         Space space = spaceService.getById(id);
         ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR);
         SpaceVO spaceVO = spaceService.getSpaceVO(space, request);
+        User loginUser = userService.getLoginUser(request);
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
+        spaceVO.setPermissionList(permissionList);
         return ResultUtils.success(spaceVO);
 
     }
@@ -204,6 +213,7 @@ public class SpaceController {
         }
         QueryWrapper<Space> space = new QueryWrapper<>();
         space.eq("userId", loginUser.getId());
+        space.eq("spaceType", 0);
         Long spaceId = spaceService.getBaseMapper().selectOne(space).getId();
         return ResultUtils.success(spaceId);
     }

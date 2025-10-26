@@ -10,6 +10,7 @@ import com.ziwan.ziwanpicturebackend.constant.UserConstant;
 import com.ziwan.ziwanpicturebackend.exception.BusinessException;
 import com.ziwan.ziwanpicturebackend.exception.ErrorCode;
 import com.ziwan.ziwanpicturebackend.exception.ThrowUtils;
+import com.ziwan.ziwanpicturebackend.manager.auth.StpKit;
 import com.ziwan.ziwanpicturebackend.model.dto.space.SpaceAddRequest;
 import com.ziwan.ziwanpicturebackend.model.dto.user.UserQueryRequest;
 import com.ziwan.ziwanpicturebackend.model.dto.user.UserRegisterRequest;
@@ -127,7 +128,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         ThrowUtils.throwIf(user == null, ErrorCode.PARAM_ERROR, "用户不存在或密码错误");
         // 3.保存用户的登录态
         request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, user);
-
+        // 4.保存用户的空间态到sa-Taken
+        StpKit.SPACE.login(user.getId());
+        StpKit.SPACE.getSession().set(UserConstant.USER_LOGIN_STATE, user);
         return this.getLoginUserVO(user);
     }
 
@@ -214,6 +217,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
         ThrowUtils.throwIf(userObj == null, ErrorCode.OPERATION_ERROR, "未登录");
         request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
+        StpKit.SPACE.logout();
         return true;
 
 

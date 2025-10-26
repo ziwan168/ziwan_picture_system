@@ -571,6 +571,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAM_ERROR);
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
         Picture oldPicture = this.getById(id);
+        Long spaceId = oldPicture.getSpaceId();
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
         //权限校验
         this.checkPictureAuth(loginUser, oldPicture);
@@ -579,13 +580,16 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             //插入数据库
             boolean remove = this.removeById(id);
             ThrowUtils.throwIf(!remove, ErrorCode.OPERATION_ERROR);
-            //更新额度
-            boolean update = spaceService.lambdaUpdate()
-                    .eq(Space::getId, oldPicture.getSpaceId())
-                    .setSql("totalSize = totalSize -" + oldPicture.getPicSize())
-                    .setSql("totalCount = totalCount -1")
-                    .update();
-            ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "更新额度失败");
+
+            if (ObjUtil.isNotNull(spaceId)) {
+                //更新额度
+                boolean update = spaceService.lambdaUpdate()
+                        .eq(Space::getId, oldPicture.getSpaceId())
+                        .setSql("totalSize = totalSize -" + oldPicture.getPicSize())
+                        .setSql("totalCount = totalCount -1")
+                        .update();
+                ThrowUtils.throwIf(!update, ErrorCode.OPERATION_ERROR, "更新额度失败");
+            }
             return true;
         });
         //删除图片资源
