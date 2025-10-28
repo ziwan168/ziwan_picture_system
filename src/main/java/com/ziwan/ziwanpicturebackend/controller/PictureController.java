@@ -1,7 +1,6 @@
 package com.ziwan.ziwanpicturebackend.controller;
 
 
-import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -20,6 +19,7 @@ import com.ziwan.ziwanpicturebackend.exception.BusinessException;
 import com.ziwan.ziwanpicturebackend.exception.ErrorCode;
 import com.ziwan.ziwanpicturebackend.exception.ThrowUtils;
 import com.ziwan.ziwanpicturebackend.manager.auth.SpaceUserAuthManager;
+import com.ziwan.ziwanpicturebackend.manager.auth.StpKit;
 import com.ziwan.ziwanpicturebackend.manager.auth.annotation.SaSpaceCheckPermission;
 import com.ziwan.ziwanpicturebackend.manager.auth.model.SpaceUserPermissionConstant;
 import com.ziwan.ziwanpicturebackend.model.dto.picture.*;
@@ -181,8 +181,12 @@ public class PictureController {
         Space space = null;
         User loginUser = null;
         if (spaceId != null) {
+            boolean hasPermission = StpKit.SPACE.hasPermission(SpaceUserPermissionConstant.PICTURE_VIEW);
+            if (!hasPermission) {
+                throw new BusinessException(ErrorCode.NO_AUTO_ERROR);
+            }
             loginUser = userService.getLoginUser(request);
-            pictureService.checkPictureAuth(loginUser, picture);
+            //pictureService.checkPictureAuth(loginUser, picture);
             space = spaceService.getById(spaceId);
             ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR);
         }
@@ -232,10 +236,15 @@ public class PictureController {
             pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.REVIEW_PASS.getValue());
             pictureQueryRequest.setNullSpaceId(true);
         } else {
-            User loginUser = userService.getLoginUser(request);
-            Space space = spaceService.getById(spaceId);
-            ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
-            ThrowUtils.throwIf(!space.getUserId().equals(loginUser.getId()), ErrorCode.NO_AUTO_ERROR, "无此空间权限");
+            //User loginUser = userService.getLoginUser(request);
+            //Space space = spaceService.getById(spaceId);
+            //ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
+            boolean hasPermission = StpKit.SPACE.hasPermission(SpaceUserPermissionConstant.PICTURE_VIEW);
+            if (!hasPermission) {
+                throw new BusinessException(ErrorCode.NO_AUTO_ERROR);
+            }
+
+            //ThrowUtils.throwIf(!space.getUserId().equals(loginUser.getId()), ErrorCode.NO_AUTO_ERROR, "无此空间权限");
 
         }
         // 分页查询

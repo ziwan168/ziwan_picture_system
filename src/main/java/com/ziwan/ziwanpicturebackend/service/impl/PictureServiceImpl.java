@@ -24,13 +24,16 @@ import com.ziwan.ziwanpicturebackend.model.dto.file.UploadPictureResult;
 import com.ziwan.ziwanpicturebackend.model.dto.picture.*;
 import com.ziwan.ziwanpicturebackend.model.entity.Picture;
 import com.ziwan.ziwanpicturebackend.model.entity.Space;
+import com.ziwan.ziwanpicturebackend.model.entity.SpaceUser;
 import com.ziwan.ziwanpicturebackend.model.entity.User;
 import com.ziwan.ziwanpicturebackend.model.enums.PictureReviewStatusEnum;
+import com.ziwan.ziwanpicturebackend.model.enums.SpaceRoleEnum;
 import com.ziwan.ziwanpicturebackend.model.vo.PictureVO;
 import com.ziwan.ziwanpicturebackend.model.vo.UserVO;
 import com.ziwan.ziwanpicturebackend.service.PictureService;
 import com.ziwan.ziwanpicturebackend.mapper.PictureMapper;
 import com.ziwan.ziwanpicturebackend.service.SpaceService;
+import com.ziwan.ziwanpicturebackend.service.SpaceUserService;
 import com.ziwan.ziwanpicturebackend.service.UserService;
 import com.ziwan.ziwanpicturebackend.utils.ColorSimilarUtils;
 import com.ziwan.ziwanpicturebackend.utils.ColorTransformUtils;
@@ -85,6 +88,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     @Resource
     private ALiYunAiApi aLiYunAiApi;
+
+    @Resource
+    private SpaceUserService spaceUserService;
 
     /**
      * 验证
@@ -157,14 +163,33 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             oldPicture = this.getById(pictureId);
             ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
 
-            if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-                throw new BusinessException(ErrorCode.NO_AUTO_ERROR);
-            }
+            QueryWrapper<SpaceUser> spaceUserQueryWrapper = new QueryWrapper<>();
+            spaceId = oldPicture.getSpaceId();
+            if (spaceId != null){
+                spaceUserQueryWrapper.eq("spaceId", spaceId);
+                spaceUserQueryWrapper.eq("userId", loginUser.getId());
+                SpaceUser spaceUser = spaceUserService.getOne(spaceUserQueryWrapper);
+                if (spaceUser != null) {
+                    SpaceRoleEnum value = SpaceRoleEnum.getEnumByValue(spaceUser.getSpaceRole());
+                    if (ObjUtil.isNotEmpty(spaceUser) && value != null) {
+                        if (SpaceRoleEnum.VIEWER.getValue().equals(value.getValue())) {
+                            throw new BusinessException(ErrorCode.NO_AUTO_ERROR, "无此空间权限");
+                        }
+                    }
 
-            //校验空间是否一致
-            if (spaceId != null && oldPicture.getSpaceId() != null &&
-                    !spaceId.equals(oldPicture.getSpaceId())) {
-                throw new BusinessException(ErrorCode.NO_AUTO_ERROR, "空间不一致");
+                }
+            }
+            else {
+                if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+                    throw new BusinessException(ErrorCode.NO_AUTO_ERROR);
+                }
+
+                //校验空间是否一致
+                if (spaceId != null && oldPicture.getSpaceId() != null &&
+                        !spaceId.equals(oldPicture.getSpaceId())) {
+                    throw new BusinessException(ErrorCode.NO_AUTO_ERROR, "空间不一致");
+                }
+
             }
 
 //            boolean exists = this.lambdaQuery().eq(Picture::getId, pictureId).exists();
@@ -214,20 +239,21 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             picture.setEditTime(new Date());
         }
 
+        Long finalSpaceId = spaceId;
         transactionTemplate.execute(status -> {
             try {
                 // 保存或更新图片
                 boolean save = this.saveOrUpdate(picture);
                 ThrowUtils.throwIf(!save, ErrorCode.OPERATION_ERROR, "图片上传失败");
 
-                if (spaceId != null) {
+                if (finalSpaceId != null) {
                     // 新增或替换的空间额度更新
                     long newSize = picture.getPicSize() != null ? picture.getPicSize() : 0;
                     long oldSize = (oldPicture != null && oldPicture.getPicSize() != null) ? oldPicture.getPicSize() : 0;
                     long sizeDiff = newSize - oldSize;
 
                     LambdaUpdateChainWrapper<Space> update = spaceService.lambdaUpdate()
-                            .eq(Space::getId, spaceId)
+                            .eq(Space::getId, finalSpaceId)
                             .setSql("totalSize = totalSize +" + sizeDiff);
                     if (oldPicture != null) {
                         this.clearPicture(oldPicture);

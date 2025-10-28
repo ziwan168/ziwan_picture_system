@@ -186,7 +186,6 @@
                 <version>${spring-boot.version}</version>
                 <configuration>
                     <mainClass>com.ziwan.ziwanpicturebackend.ZiwanPictureBackendApplication</mainClass>
-                    <skip>true</skip>
                 </configuration>
                 <executions>
                     <execution>

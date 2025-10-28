@@ -73,6 +73,10 @@ knife4j:
         api-rule: package
         api-rule-resources:
           - com.ziwan.ziwanpicturebackend.controller
+  basic:
+    enable: true
+    username: ${knife4j.basic.username}
+    password: ${knife4j.basic.password}
 
 
 cos:
